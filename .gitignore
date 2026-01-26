@@ -1,0 +1,24 @@
+# Binaries
+*.exe
+*.wasm
+*.dll
+*.so
+*.dylib
+dbmanager
+
+# Test binaries
+*.test
+
+# Output directories
+dist/
+bin/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
