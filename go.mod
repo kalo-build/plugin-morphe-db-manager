@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/jackc/pgx/v5 v5.7.4
-	github.com/kalo-build/kalo-sdk-go v0.0.0
+	github.com/kalo-build/kalo-sdk-go v0.0.0-20260126132102-ef71db7f4939
 )
 
 require (
@@ -15,5 +15,3 @@ require (
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 )
-
-replace github.com/kalo-build/kalo-sdk-go => ../kalo-sdk-go
