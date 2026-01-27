@@ -1,13 +1,24 @@
 # Morphe Database Manager Plugin
 
-A Kalo plugin for applying SQL migrations to PostgreSQL databases. This plugin reads migration files from a filesystem store and applies them to a database store, tracking which migrations have been applied.
+A Kalo plugin for managing PostgreSQL database schemas through SQL migrations. Supports multiple operation modes for development and production workflows.
 
 ## Features
 
+- **Multi-Mode Operation**: up, down, refresh, seed, reset modes
 - **Migration Tracking**: Tracks applied migrations in a `kalo_migrations` table
 - **Checksum Validation**: Detects if applied migrations have been modified
-- **Dry Run Mode**: Preview what migrations would be applied
+- **Dual Input**: Reads base schema files and diff migrations separately
 - **Dual Use**: Works as both a Kalo WASM plugin and a standalone CLI
+
+## Operation Modes
+
+| Mode | Alias | Description | Production Safe |
+|------|-------|-------------|-----------------|
+| `up` | `up` | Apply pending migrations | Yes |
+| `down` | `down` | Drop all tables | **No** |
+| `refresh` | `refresh` | Drop and recreate all tables | **No** |
+| `seed` | `seed` | Insert initial data | Yes (if idempotent) |
+| `reset` | `reset` | Reset to base schema only (dev-only) | **No** |
 
 ## Usage
 
@@ -17,41 +28,97 @@ Configure in your `kalo.yaml`:
 
 ```yaml
 stores:
+  KA_MO_PSQL:
+    format: "KA:MO1:PSQL1"
+    type: "localFileSystem"
+    options:
+      path: "./internal/database/schema"
+
   KA_MIGRATIONS:
     format: "KA:PSQL:MIGRATION1"
     type: "localFileSystem"
     options:
       path: "./migrations"
 
+  KA_SEED:
+    format: "KA:PSQL:SEED1"
+    type: "localFileSystem"
+    options:
+      path: "./seed"
+
   DB_MAIN:
     format: "KA:PSQL:LIVE"
     type: "cloudSqlDatabase"
     options:
-      provider: "gcp"
       connection: "$DATABASE_URL"
 
 plugins:
   "@kalo-build/plugin-morphe-db-manager":
     version: "v1.0.0"
-    input:
-      format: "KA:PSQL:MIGRATION1"
-      store: "KA_MIGRATIONS"
+    inputs:
+      schema:
+        format: "KA:MO1:PSQL1"
+        store: "KA_MO_PSQL"
+      migrations:
+        format: "KA:PSQL:MIGRATION1"
+        store: "KA_MIGRATIONS"
+      seed:
+        format: "KA:PSQL:SEED1"
+        store: "KA_SEED"
     output:
       format: "KA:PSQL:LIVE"
       store: "DB_MAIN"
 
 pipelines:
-  migrate:
+  migrate-up:
+    description: "Apply pending migrations"
+    alias: "up"
     stages:
-      - name: "apply"
-        steps:
-          - "plugin: @kalo-build/plugin-morphe-db-manager"
+    - name: "up"
+      steps:
+        - "plugin: @kalo-build/plugin-morphe-db-manager"
+      config:
+        mode: "up"
+
+  migrate-down:
+    description: "Drop all tables (DESTRUCTIVE)"
+    alias: "down"
+    stages:
+    - name: "down"
+      steps:
+        - "plugin: @kalo-build/plugin-morphe-db-manager"
+      config:
+        mode: "down"
+
+  migrate-refresh:
+    description: "Drop and recreate all tables (DESTRUCTIVE)"
+    alias: "refresh"
+    stages:
+    - name: "refresh"
+      steps:
+        - "plugin: @kalo-build/plugin-morphe-db-manager"
+      config:
+        mode: "refresh"
+
+  migrate-seed:
+    description: "Insert seed data"
+    alias: "seed"
+    stages:
+    - name: "seed"
+      steps:
+        - "plugin: @kalo-build/plugin-morphe-db-manager"
+      config:
+        mode: "seed"
+        seedStore: "KA_SEED"
 ```
 
 Then run:
 
 ```bash
-kalo run migrate
+kalo run up       # Apply pending migrations
+kalo run down     # Drop all tables
+kalo run refresh  # Drop and recreate tables
+kalo run seed     # Insert seed data
 ```
 
 ### As a Standalone CLI

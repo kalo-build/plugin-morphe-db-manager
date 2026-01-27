@@ -1,21 +1,15 @@
 @echo off
-setlocal
-
-REM Build the WASM plugin
-echo Building WASM plugin...
-if not exist dist mkdir dist
 set GOOS=wasip1
 set GOARCH=wasm
-go build -o dist\plugin-morphe-db-manager.wasm .\cmd\plugin
 
-echo Built: dist\plugin-morphe-db-manager.wasm
+REM Create dist directory if it doesn't exist
+if not exist "..\dist" mkdir "..\dist"
 
-REM Build the standalone CLI
-echo Building standalone CLI...
-set GOOS=
-set GOARCH=
-go build -o dist\dbmanager.exe .\cmd\dbmanager
+go build -o ../dist/morphe-db-manager-v1.0.0.wasm ../cmd/plugin/main.go
 
-echo Built: dist\dbmanager.exe
-echo Done!
-
+if %errorlevel% equ 0 (
+    echo Build successful: dist/morphe-db-manager-v1.0.0.wasm
+) else (
+    echo Build failed
+    exit /b 1
+)

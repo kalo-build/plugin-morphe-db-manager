@@ -1,17 +1,9 @@
 #!/bin/bash
 set -e
 
-# Build the WASM plugin
-echo "Building WASM plugin..."
-mkdir -p dist
-GOOS=wasip1 GOARCH=wasm go build -o dist/plugin-morphe-db-manager.wasm ./cmd/plugin
+# Create dist directory if it doesn't exist
+mkdir -p ../dist
 
-echo "Built: dist/plugin-morphe-db-manager.wasm"
+GOOS=wasip1 GOARCH=wasm go build -o ../dist/morphe-db-manager-v1.0.0.wasm ../cmd/plugin/main.go
 
-# Build the standalone CLI
-echo "Building standalone CLI..."
-go build -o dist/dbmanager ./cmd/dbmanager
-
-echo "Built: dist/dbmanager"
-echo "Done!"
-
+echo "Build successful: dist/morphe-db-manager-v1.0.0.wasm"

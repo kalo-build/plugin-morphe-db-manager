@@ -17,8 +17,8 @@ type MigrateResult struct {
 	Errors  []error
 }
 
-// Migrate applies all pending migrations from source using executor.
-func Migrate(source MigrationSource, executor MigrationExecutor, opts *MigrateOptions) (*MigrateResult, error) {
+// Migrate applies all pending migrations from source using the database.
+func Migrate(source MigrationSource, db *Database, opts *MigrateOptions) (*MigrateResult, error) {
 	if opts == nil {
 		opts = &MigrateOptions{}
 	}
@@ -30,12 +30,12 @@ func Migrate(source MigrationSource, executor MigrationExecutor, opts *MigrateOp
 	}
 
 	// Ensure tracking table exists
-	if err := executor.EnsureTrackingTable(); err != nil {
+	if err := db.EnsureTrackingTable(); err != nil {
 		return nil, fmt.Errorf("failed to ensure tracking table: %w", err)
 	}
 
 	// Get applied migrations
-	applied, err := executor.GetApplied()
+	applied, err := db.GetAppliedMigrations()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get applied migrations: %w", err)
 	}
@@ -78,7 +78,7 @@ func Migrate(source MigrationSource, executor MigrationExecutor, opts *MigrateOp
 		}
 
 		// Apply migration
-		if err := executor.Apply(m.Name, m.Checksum, sql); err != nil {
+		if err := db.ApplyMigration(m.Name, sql); err != nil {
 			result.Errors = append(result.Errors,
 				fmt.Errorf("failed to apply migration %s: %w", m.Name, err))
 			// Stop on first error
@@ -90,4 +90,3 @@ func Migrate(source MigrationSource, executor MigrationExecutor, opts *MigrateOp
 
 	return result, nil
 }
-

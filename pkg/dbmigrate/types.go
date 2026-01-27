@@ -1,17 +1,20 @@
 // Package dbmigrate provides database migration functionality.
+// All migration tracking logic is encapsulated here - the SDK only provides
+// generic database access (Exec, Query).
 package dbmigrate
 
 // MigrationFile represents a migration file on disk.
 type MigrationFile struct {
-	Name     string
+	Name     string // Name used for tracking (may include prefix like "schema:")
+	Path     string // Actual file path for reading (optional, defaults to Name)
 	Checksum string
 }
 
 // AppliedMigration represents a migration that has been applied.
 type AppliedMigration struct {
-	Name      string
-	Checksum  string
-	AppliedAt int64
+	Name      string `json:"name"`
+	Checksum  string `json:"checksum"`
+	AppliedAt int64  `json:"applied_at"`
 }
 
 // MigrationSource provides access to migration files.
@@ -21,14 +24,3 @@ type MigrationSource interface {
 	// ReadMigration reads the SQL content of a migration.
 	ReadMigration(name string) ([]byte, error)
 }
-
-// MigrationExecutor executes migrations against a database.
-type MigrationExecutor interface {
-	// EnsureTrackingTable creates the migration tracking table if it doesn't exist.
-	EnsureTrackingTable() error
-	// GetApplied returns all applied migrations.
-	GetApplied() ([]AppliedMigration, error)
-	// Apply executes a migration.
-	Apply(name string, checksum string, sql []byte) error
-}
-
