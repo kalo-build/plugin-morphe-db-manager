@@ -1,0 +1,63 @@
+name: "@kalo-build/plugin-morphe-db-manager"
+displayName: "Morphe DB Manager"
+description: "Manages PostgreSQL database migrations. Applies schema and diff migrations, tracks applied changes, and supports seed data."
+version: "1.0.0"
+
+inputs:
+  schema:
+    format: "KA:MO1:PSQL1"
+    description: "Base PostgreSQL schema files"
+    suggestedStore:
+      name: "KA_MO_PSQL"
+      type: "localFileSystem"
+      path: "./schema"
+  migrations:
+    format: "KA:PSQL:MIGRATION1"
+    description: "SQL migration files"
+    suggestedStore:
+      name: "KA_MIGRATIONS"
+      type: "localFileSystem"
+      path: "./migrations"
+  seed:
+    format: "KA:PSQL:SEED1"
+    description: "Seed data SQL files"
+    suggestedStore:
+      name: "KA_SEED"
+      type: "localFileSystem"
+      path: "./seed"
+
+output:
+  format: "KA:PSQL:LIVE"
+  description: "Live PostgreSQL database"
+  suggestedStore:
+    name: "DB_MAIN"
+    type: "cloudSqlDatabase"
+    connection: "$DATABASE_URL"
+
+modes:
+  up:
+    description: "Apply pending migrations"
+    productionSafe: true
+    isDefault: true
+  down:
+    description: "Drop all tables"
+    productionSafe: false
+  refresh:
+    description: "Drop and recreate all tables"
+    productionSafe: false
+  seed:
+    description: "Insert initial data"
+    productionSafe: true
+  reset:
+    description: "Reset to base schema only (dev-only)"
+    productionSafe: false
+
+configSchema:
+  dryRun:
+    type: boolean
+    default: false
+    description: "Preview changes without applying"
+  verbose:
+    type: boolean
+    default: false
+    description: "Enable verbose logging"
