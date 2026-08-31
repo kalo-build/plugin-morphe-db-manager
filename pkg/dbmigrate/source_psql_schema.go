@@ -83,6 +83,10 @@ func (s *PSQLSchemaMigrationSource) listMigrationsInDir(dir string) ([]Migration
 		if !strings.HasSuffix(entry.Name, ".sql") {
 			continue
 		}
+		// Diff migrations use .up.sql / .down.sql pairs. Only include .up.sql when migrating up.
+		if s.prefix == "diff:" && !strings.HasSuffix(entry.Name, ".up.sql") {
+			continue
+		}
 
 		// Construct the full path
 		var filePath string
